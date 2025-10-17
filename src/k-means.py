@@ -13,6 +13,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import time
+import pandas as pd
 
 import csv
 import sys
@@ -21,49 +22,118 @@ from scipy.io import arff
 from sklearn import cluster
 from sklearn import metrics
 
-
+from sklearn.preprocessing import StandardScaler
 
 import matplotlib
 matplotlib.use("TkAgg")
+from kneed import KneeLocator
 
+
+def best_param(dataset, dataset_name, is_plot_graph):
+    # Evaluate metrics for different parameters and plot
+
+    n_samples = dataset.shape[0]
+    k_max = max(2, int(n_samples / 50))  # dynamic upper bound for k
+    all_metrics = []
+    best_perf = {
+            'k': -1,
+            'inertia': -1,
+            'iterations': -1,
+            'runtime': -1
+        }
+    
+    print(f"Recherche du meilleur k entre 2 et {k_max-1}...")
+
+    for k in range(2,k_max) :
+        
+        tps1 = time.time()
+        model = cluster.KMeans(n_clusters=k, init='k-means++', n_init=1)
+        model.fit(dataset)
+        tps2 = time.time()
+        runtime = round((tps2 - tps1)*1000,2)
+
+        # Silhouette (non calculable pour k=1)
+        sil = metrics.silhouette_score(X, model.labels_)
+
+        # Collect all_metrics
+        all_metrics.append({
+            'k': k,
+            'inertia': model.inertia_,
+            'silhouette': sil,
+            'iterations': model.n_iter_,
+            'runtime': runtime,
+            'centroids': model.cluster_centers_,
+            'labels': model.labels_
+        })
+
+    df = pd.DataFrame(all_metrics)
+    print(df.head())
+
+    # Méthode du coude
+    ks = df['k'].values
+    inertias = df['inertia'].values
+
+    # Utilisation de KneeLocator
+    kl = KneeLocator(ks, inertias, curve='convex', direction='decreasing')
+    best_k = kl.knee or int(ks[np.argmin(np.gradient(inertias))])
+
+    print(f"→ k optimal détecté automatiquement : {best_k} (KneeLocator)")
+
+    # Récupération de la ligne correspondante dans all_metrics
+    best_perf = next(item for item in all_metrics if item['k'] == best_k)
+
+    if is_plot_graph:
+
+        plt.plot(df['k'], df['inertia'], marker='o')
+        plt.title("Inertia vs k")
+        plt.xlabel("k")
+        plt.ylabel("Inertia")
+        plt.show()
+
+        plt.plot(df['k'], df['runtime'], marker='o')
+        plt.title("Runtime vs k")
+        plt.xlabel("k")
+        plt.ylabel("Runtime")
+        plt.show()
+
+        plt.plot(df['k'], df['silhouette'], marker='o')
+        plt.title("Sikhouette vs k")
+        plt.xlabel("k")
+        plt.ylabel("Sikhouette")
+        plt.show()
+
+    return best_perf
+
+### Prepare data
 path = './dataset/artificial/'
 dataset_name = str(sys.argv[1])
 
 databrut = arff.loadarff(open(path+str(dataset_name), 'r'))
 datanp = np.array([[x[0],x[1]] for x in databrut[0]])
 
-k = 4
+
+# TODO : Besoin de prétraitement des données ?
+# Prétraitement
+scaler = StandardScaler()
+X = scaler.fit_transform(datanp)
 
 print("---------------------------------------")
 print("Affichage données initiales            "+ str(dataset_name))
 f0 = datanp[:,0]
 f1 = datanp[:,1]
 
-# TODO : Besoin de prétraitement des données ?
+# Run best param selection 
+results = best_param(datanp, dataset_name, 1)
 
 # Show plot - make optional
 plt.scatter(f0, f1, s=8)
 plt.title("Donnees initiales : "+ str(dataset_name))
 plt.show()
 
-# Run Kmeans to find k clusters
-print("------------------------------------------------------")
-print("Appel KMeans pour une valeur de k fixée")
-tps1 = time.time()
-model = cluster.KMeans(n_clusters=k, init='k-means++', n_init=1)
-model.fit(datanp)
-tps2 = time.time()
-labels = model.labels_
-
-# Clustering obtenu
-iteration = model.n_iter_
-inertie = model.inertia_
-centroids = model.cluster_centers_
-runtime = round((tps2 - tps1)*1000,2)
-
-plt.scatter(f0, f1, c=labels, s=8)
-plt.scatter(centroids[:, 0],centroids[:, 1], marker="x", s=50, linewidths=3, color="red")
-plt.title("Données après clustering : "+ str(dataset_name) + " - Nb clusters ="+ str(k))
+plt.scatter(f0, f1, c=results['labels'], s=8)
+plt.scatter(results['centroids'][:, 0],results['centroids'][:, 1], marker="x", s=50, linewidths=3, color="red")
+plt.title("Données après clustering : "+ str(dataset_name) + " - Nb clusters ="+ str(results['k']))
 plt.show()
 
-print("nb clusters =",k,", nb iter =",iteration, ", inertie = ", inertie, ", runtime = ", runtime,"ms")
+# TODO : Fetcht the best parameters all_metrics
+print("nb clusters =",results['k'],", nb iter =",results['iterations'] , ", inertie = ", results['inertia'], ", runtime = ", results['runtime'],"ms")

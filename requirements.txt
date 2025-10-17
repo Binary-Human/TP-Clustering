@@ -4,3 +4,4 @@ matplotlib
 scikit-learn
 pandas
 python3-tk
+kneed
