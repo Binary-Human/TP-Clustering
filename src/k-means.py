@@ -1,15 +1,3 @@
-# Load data
-# Make some clusters
-# algorithms to automatize 
-    # Show knee method
-
-# Final parameters
-# Final visualization 
-
-# Metrics 
-    # Scores
-    # Execution
-
 import numpy as np
 import matplotlib.pyplot as plt
 import time
@@ -29,7 +17,8 @@ matplotlib.use("TkAgg")
 from kneed import KneeLocator
 
 
-def best_param(dataset, dataset_name, is_plot_graph):
+def best_param(dataset, is_plot_graph):
+    # TODO : test on samples (expected - found)
     # Evaluate metrics for different parameters and plot
 
     n_samples = dataset.shape[0]
@@ -97,12 +86,14 @@ def best_param(dataset, dataset_name, is_plot_graph):
         plt.show()
 
         plt.plot(df['k'], df['silhouette'], marker='o')
-        plt.title("Sikhouette vs k")
+        plt.title("Silhouette vs k")
         plt.xlabel("k")
-        plt.ylabel("Sikhouette")
+        plt.ylabel("Silhouette")
         plt.show()
 
     return best_perf
+
+# name="square1.arff"
 
 ### Prepare data
 path = './dataset/artificial/'
@@ -123,7 +114,7 @@ f0 = datanp[:,0]
 f1 = datanp[:,1]
 
 # Run best param selection 
-results = best_param(datanp, dataset_name, 1)
+results = best_param(datanp, 1)
 
 # Show plot - make optional
 plt.scatter(f0, f1, s=8)
@@ -135,5 +126,11 @@ plt.scatter(results['centroids'][:, 0],results['centroids'][:, 1], marker="x", s
 plt.title("Données après clustering : "+ str(dataset_name) + " - Nb clusters ="+ str(results['k']))
 plt.show()
 
-# TODO : Fetcht the best parameters all_metrics
-print("nb clusters =",results['k'],", nb iter =",results['iterations'] , ", inertie = ", results['inertia'], ", runtime = ", results['runtime'],"ms")
+# Fetch the metrics from best params
+print(
+    f"nb clusters = {results['k']}, "
+    f"nb iter = {results['iterations']}, "
+    f"inertie = {results['inertia']:.2f}, "
+    f"silhouette = {results['silhouette']:.4f}, "
+    f"runtime = {results['runtime']} ms"
+)
