@@ -17,7 +17,7 @@ matplotlib.use("TkAgg")
 from kneed import KneeLocator
 
 
-def best_param(dataset, is_plot_graph):
+def best_params(dataset, is_plot_graph):
     # TODO : test on samples (expected - found)
     # Evaluate metrics for different parameters and plot
 
@@ -114,7 +114,7 @@ f0 = datanp[:,0]
 f1 = datanp[:,1]
 
 # Run best param selection 
-results = best_param(datanp, 1)
+results = best_params(datanp, 1)
 
 # Show plot - make optional
 plt.scatter(f0, f1, s=8)
