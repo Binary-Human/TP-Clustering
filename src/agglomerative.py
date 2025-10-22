@@ -14,15 +14,12 @@ from sklearn.preprocessing import StandardScaler
 import matplotlib
 matplotlib.use("TkAgg")
 
-def best_params(dataset, is_plot_graph, n_clusters = None, dist = None):
+def best_params(dataset, is_plot_graph, link='average', n_clusters = None, dist = None):
 
-    # Fixer la métriques à maximiser : Silhouette
-
-    # Tester sur dist différents ? -> which K better silhouette
-    # Tester sur linkage différents ? -> Which one gives un k qui se démarque
+    # TODO : Tester sur linkage différents ? -> Which one gives un k qui se démarque
 
     n_samples = dataset.shape[0]
-    k_values = range(2, max(2, int(n_samples / 50)))  # dynamic upper bound for k
+    k_values = range(2,  min(50, max(2, int(n_samples / 50))))  # dynamic upper bound for k
 
     silhouette_scores = []
 
@@ -40,7 +37,7 @@ def best_params(dataset, is_plot_graph, n_clusters = None, dist = None):
 
         # runtime
         tps1 = time.time()
-        model = cluster.AgglomerativeClustering(linkage='average', n_clusters=k)
+        model = cluster.AgglomerativeClustering(linkage=link, n_clusters=k)
         labels = model.fit_predict(dataset)
         tps2 = time.time()
         runtime = round((tps2 - tps1)*1000,2)
@@ -88,8 +85,6 @@ def best_params(dataset, is_plot_graph, n_clusters = None, dist = None):
         
     return best_perf
 
-# name="3-spiral.arff"
-
 ### Prepare data
 path = './dataset/artificial/'
 dataset_name = str(sys.argv[1])
@@ -100,15 +95,15 @@ datanp = np.array([[x[0],x[1]] for x in databrut[0]])
 # TODO : Besoin ?
 # Prétraitement
 scaler = StandardScaler()
-X = scaler.fit_transform(datanp)
+scaled_datanp = scaler.fit_transform(datanp)
 
 print("---------------------------------------")
 print("Affichage données initiales            "+ str(dataset_name))
-f0 = datanp[:,0]
-f1 = datanp[:,1]
+f0 = scaled_datanp[:,0]
+f1 = scaled_datanp[:,1]
 
 # Run best param selection 
-results = best_params(datanp, 1)
+results = best_params(scaled_datanp, 1)
 
 # Show plot - make optional
 plt.scatter(f0, f1, s=8)
