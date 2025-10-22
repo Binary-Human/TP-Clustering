@@ -74,7 +74,7 @@ def best_params(dataset, is_plot_graph):
     print(f"→ k optimal détecté automatiquement : {best_k} (KneeLocator)")
 
     # Récupération de la ligne correspondante dans all_metrics
-    best_perf = next(item for item in all_metrics if item['k'] == 2)
+    best_perf = next(item for item in all_metrics if item['k'] == best_k) # HERE TO SET K
 
     if is_plot_graph:
 
