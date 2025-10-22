@@ -14,12 +14,47 @@ from sklearn.preprocessing import StandardScaler
 import matplotlib
 matplotlib.use("TkAgg")
 
+from scipy.cluster.hierarchy import dendrogram
+
+def plot_dendrogram(data):
+    # Create linkage matrix and then plot the dendrogram
+ 
+    # setting distance_threshold=0 ensures we compute the full tree.
+    model = cluster.AgglomerativeClustering(distance_threshold=0, linkage='average', n_clusters=None)
+    model = model.fit(data)
+
+    # create the counts of samples under each node
+    counts = np.zeros(model.children_.shape[0])
+    n_samples = len(model.labels_)
+    for i, merge in enumerate(model.children_):
+        current_count = 0
+        for child_idx in merge:
+            if child_idx < n_samples:
+                current_count += 1  # leaf node
+            else:
+                current_count += counts[child_idx - n_samples]
+        counts[i] = current_count
+
+    linkage_matrix = np.column_stack(
+        [model.children_, model.distances_, counts]
+    ).astype(float)
+
+    plt.figure(figsize=(12, 12))
+    plt.title("Hierarchical Clustering Dendrogram")
+
+    # Plot the corresponding dendrogram
+    dendrogram(linkage_matrix) #, **kwargs)
+
+    plt.xlabel("Number of points in node (or index of point if no parenthesis).")
+    plt.show()
+
+
 def best_params(dataset, is_plot_graph, link='average', n_clusters = None, dist = None):
 
     # TODO : Tester sur linkage différents ? -> Which one gives un k qui se démarque
 
     n_samples = dataset.shape[0]
-    k_values = range(2,  min(50, max(2, int(n_samples / 50))))  # dynamic upper bound for k
+    k_values = range(2,  min(50, max(2, int(n_samples / 15))))  # dynamic upper bound for k
 
     silhouette_scores = []
 
@@ -122,3 +157,5 @@ print(
     f"silhouette = {results['silhouette']:.4f}, "
     f"runtime = {results['runtime']} ms"
 )
+
+# plot_dendrogram(scaled_datanp)
