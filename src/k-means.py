@@ -22,7 +22,7 @@ def best_params(dataset, is_plot_graph):
     # Evaluate metrics for different parameters and plot
 
     n_samples = dataset.shape[0]
-    k_max = max(2, int(n_samples / 50))  # dynamic upper bound for k
+    k_max = min(50, max(2, int(n_samples / 50)))  # dynamic upper bound for k
     all_metrics = []
     best_perf = {
             'k': -1,
@@ -35,6 +35,7 @@ def best_params(dataset, is_plot_graph):
 
     for k in range(2,k_max) :
         
+        # TODO Test with different hyperparameters ?
         tps1 = time.time()
         model = cluster.KMeans(n_clusters=k, init='k-means++', n_init=1)
         model.fit(dataset)
@@ -42,13 +43,17 @@ def best_params(dataset, is_plot_graph):
         runtime = round((tps2 - tps1)*1000,2)
 
         # Silhouette (non calculable pour k=1)
-        sil = metrics.silhouette_score(X, model.labels_)
+        sil = metrics.silhouette_score(dataset, model.labels_)
+        davies = metrics.davies_bouldin_score(dataset, model.labels_)
+        calinski = metrics.calinski_harabasz_score(dataset, model.labels_)
 
         # Collect all_metrics
         all_metrics.append({
             'k': k,
             'inertia': model.inertia_,
             'silhouette': sil,
+            'davies': davies,
+            'calinski': calinski,
             'iterations': model.n_iter_,
             'runtime': runtime,
             'centroids': model.cluster_centers_,
@@ -69,7 +74,7 @@ def best_params(dataset, is_plot_graph):
     print(f"→ k optimal détecté automatiquement : {best_k} (KneeLocator)")
 
     # Récupération de la ligne correspondante dans all_metrics
-    best_perf = next(item for item in all_metrics if item['k'] == best_k)
+    best_perf = next(item for item in all_metrics if item['k'] == 2)
 
     if is_plot_graph:
 
@@ -91,6 +96,18 @@ def best_params(dataset, is_plot_graph):
         plt.ylabel("Silhouette")
         plt.show()
 
+        plt.plot(df['k'], df['davies'], marker='o')
+        plt.title("Davies-Bouldin vs k")
+        plt.xlabel("k")
+        plt.ylabel("Davies-Bouldin")
+        plt.show()
+
+        plt.plot(df['k'], df['calinski'], marker='o')
+        plt.title("Calinski vs k")
+        plt.xlabel("k")
+        plt.ylabel("Calinski")
+        plt.show()
+
     return best_perf
 
 # name="square1.arff"
@@ -106,15 +123,16 @@ datanp = np.array([[x[0],x[1]] for x in databrut[0]])
 # TODO : Besoin de prétraitement des données ?
 # Prétraitement
 scaler = StandardScaler()
-X = scaler.fit_transform(datanp)
+scaled_datanp = scaler.fit_transform(datanp)
+# TODO : Use scaled data
 
 print("---------------------------------------")
 print("Affichage données initiales            "+ str(dataset_name))
-f0 = datanp[:,0]
-f1 = datanp[:,1]
+f0 = scaled_datanp[:,0]
+f1 = scaled_datanp[:,1]
 
 # Run best param selection 
-results = best_params(datanp, 1)
+results = best_params(scaled_datanp, 0)
 
 # Show plot - make optional
 plt.scatter(f0, f1, s=8)
