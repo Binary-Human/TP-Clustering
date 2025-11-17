@@ -16,6 +16,8 @@ matplotlib.use("TkAgg")
 
 from scipy.cluster.hierarchy import dendrogram
 
+SHOW_EXECUTION = True
+
 def plot_dendrogram(data):
     # Create linkage matrix and then plot the dendrogram
  
@@ -49,7 +51,8 @@ def plot_dendrogram(data):
     plt.show()
 
 
-def best_params(dataset, is_plot_graph, link='average', n_clusters = None, dist = None):
+def best_params(dataset, is_plot_graph, link='average', n_clusters = None, dist = None, metric='silhouette'):
+    # TODO : add other ways to prioritize clustering - metric
 
     # TODO : Tester sur linkage différents ? -> Which one gives un k qui se démarque
 
@@ -91,7 +94,6 @@ def best_params(dataset, is_plot_graph, link='average', n_clusters = None, dist 
             'labels': model.labels_
         })
 
-    # TODO : Réflechir a dautre facon de prioriser
     # TODO : Illustrate caveats in report
     best_k = k_values[np.argmax(silhouette_scores)]
 
@@ -138,7 +140,7 @@ f0 = scaled_datanp[:,0]
 f1 = scaled_datanp[:,1]
 
 # Run best param selection 
-results = best_params(scaled_datanp, 1)
+results = best_params(scaled_datanp, SHOW_EXECUTION)
 
 # Show plot - make optional
 plt.scatter(f0, f1, s=8)
