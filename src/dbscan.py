@@ -18,7 +18,7 @@ import matplotlib
 matplotlib.use("TkAgg")
 
 SHOW_NEIGHBORS = True
-SHOW_EXECUTION = True
+SHOW_EXECUTION = False
 
 def distanceToNeighbors(dataset, v, showplot):
 
@@ -43,9 +43,9 @@ def distanceToNeighbors(dataset, v, showplot):
         plt.plot(distancetrie)
         plt.show()
 
-    return np.percentile(distancetrie, 90)
+    return np.percentile(distancetrie, 99)
 
-def best_params(dataset, is_plot_graph, metric, eps = 0.5, min_samples = 5 ):
+def best_params(dataset, is_plot_graph, metric, eps = 0.5, min_samples = 3 ):
 
     epsilon = distanceToNeighbors(dataset, min_samples, SHOW_NEIGHBORS)
     # To go through values in the loop
@@ -209,7 +209,7 @@ plt.show()
 # Fetch the metrics from best params
 print(
     f"nb clusters = {results['n_clusters']}, "
-    f"noise points = {results['silhouette']:.4f}, "
+    f"noise points = {results['noise_points']:.4f}, "
     f"silhouette = {results['silhouette']:.4f}, "
     f"davies = {results['davies']:.4f}, "
     f"calinski = {results['calinski']:.4f}, "

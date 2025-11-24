@@ -146,5 +146,7 @@ print(
     f"nb iter = {results['iterations']}, "
     f"inertie = {results['inertia']:.2f}, "
     f"silhouette = {results['silhouette']:.4f}, "
+    f"davies = {results['davies']:.4f}, "
+    f"calinski = {results['calinski']:.4f}, "
     f"runtime = {results['runtime']} ms"
 )

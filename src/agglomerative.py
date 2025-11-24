@@ -177,6 +177,3 @@ print(
     f"calinski = {results['calinski']:.4f}, "
     f"runtime = {results['runtime']} ms"
 )
-
-# TODO : Need to use
-# plot_dendrogram(scaled_datanp)
