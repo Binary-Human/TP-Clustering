@@ -22,7 +22,7 @@ def best_params(dataset, is_plot_graph):
     # Evaluate metrics for different parameters and plot
 
     n_samples = dataset.shape[0]
-    k_max = min(50, max(2, int(n_samples / 50)))  # dynamic upper bound for k
+    k_max = min(50, max(2, int(n_samples / 20)))  # dynamic upper bound for k
     all_metrics = []
     best_perf = {
             'k': -1,
@@ -34,8 +34,7 @@ def best_params(dataset, is_plot_graph):
     print(f"Recherche du meilleur k entre 2 et {k_max-1}...")
 
     for k in range(2,k_max) :
-        
-        # TODO Test with different hyperparameters ?
+
         tps1 = time.time()
         model = cluster.KMeans(n_clusters=k, init='k-means++', n_init=1)
         model.fit(dataset)
@@ -68,7 +67,7 @@ def best_params(dataset, is_plot_graph):
     inertias = df['inertia'].values
 
     # Utilisation de KneeLocator
-    kl = KneeLocator(ks, inertias, curve='convex', direction='decreasing')
+    kl = KneeLocator(ks, inertias, curve='convex', direction='decreasing', S=3)
     best_k = kl.knee or int(ks[np.argmin(np.gradient(inertias))])
 
     print(f"→ k optimal détecté automatiquement : {best_k} (KneeLocator)")
