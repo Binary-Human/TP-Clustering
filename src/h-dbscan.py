@@ -9,21 +9,20 @@ from scipy.io import arff
 from sklearn import metrics
 from sklearn.preprocessing import StandardScaler
 
-from sklearn.neighbors import NearestNeighbors
-import numpy as np
-
 import sys
 
 import matplotlib
 matplotlib.use("TkAgg")
 
-SHOW_NEIGHBORS = True
 SHOW_EXECUTION = True
 
-def numberOfNeighbors(dataset, k=5, n_values=6):
-    # The objective is to determine suitable min_cluster_size values
+from sklearn.neighbors import NearestNeighbors
+import numpy as np
 
-    N = dataset.shape[0]
+# The objective is to determine suitable min_cluster_size values
+def numberOfNeighbors(dataset, k=5, n_values=6):
+    N = len(dataset)
+
     nn = NearestNeighbors(n_neighbors=k).fit(dataset)
     dists, _ = nn.kneighbors(dataset)
     knn_d = np.sort(dists[:, -1])
@@ -31,9 +30,12 @@ def numberOfNeighbors(dataset, k=5, n_values=6):
     percentiles = np.linspace(10, 90, n_values)
     scales = np.percentile(knn_d, percentiles)
 
-    mcs = (1 / (scales / scales.max())) * (0.02 * N)
+    # min_cluster_size candidates
+    mcs = (scales.max() / scales) * (0.02 * N)
     mcs = np.clip(mcs, 5, 0.2 * N).astype(int)
+
     return sorted(set(mcs))
+
 
 def best_params(dataset, is_plot_graph, metric="stability"):
 
@@ -61,14 +63,14 @@ def best_params(dataset, is_plot_graph, metric="stability"):
         n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
         n_noise = list(labels).count(-1)
 
-        silhouette = metrics.silhouette_score(dataset, labels)
-        davies = metrics.davies_bouldin_score(dataset, labels)
-        calinski = metrics.calinski_harabasz_score(dataset, labels)
-
+        if n_clusters > 1:
+            silhouette = metrics.silhouette_score(dataset, labels)
+            davies = metrics.davies_bouldin_score(dataset, labels)
+            calinski = metrics.calinski_harabasz_score(dataset, labels)
+        
         all_metrics.append({
             "min_cluster_size": mcs,
             "n_clusters": n_clusters,
-            # "total_stability": total_stability,
             "min_samples": model.min_samples,
             "silhouette": silhouette,
             "davies": davies,
@@ -81,7 +83,7 @@ def best_params(dataset, is_plot_graph, metric="stability"):
 
     df = pd.DataFrame(all_metrics)
     print(df.head())
-    print(f"Recherche du meilleur modèle selon la stabilité totale...")
+    print(f"Recherche du meilleur modèle selon la métrique spécifiée...")
 
     # Now safely get best by defined metric
     best_perf = df.loc[df[metric].idxmax()]
@@ -100,12 +102,26 @@ def best_params(dataset, is_plot_graph, metric="stability"):
         plt.xlabel("min_cluster_size")
         plt.ylabel("Runtime (ms)")
         plt.show()
-        
-        # Davies-Bouldin vs min_cluster_size
+
+        # davies
         plt.plot(df['min_cluster_size'], df['davies'], marker='o')
         plt.title("Davies-Bouldin vs min_cluster_size")
         plt.xlabel("min_cluster_size")
         plt.ylabel("Davies-Bouldin")
+        plt.show()
+
+        # silhouette
+        plt.plot(df['min_cluster_size'], df['silhouette'], marker='o')
+        plt.title("Silhouette vs min_cluster_size")
+        plt.xlabel("min_cluster_size")
+        plt.ylabel("Silhouette")
+        plt.show()
+
+        # calinski
+        plt.plot(df['min_cluster_size'], df['calinski'], marker='o')
+        plt.title("Calisnki-Harabasz vs min_cluster_size")
+        plt.xlabel("min_cluster_size")
+        plt.ylabel("Calinski-Harabasz")
         plt.show()
 
         print("Affichage de l'arbre condensé du meilleur modèle HDBSCAN...")
@@ -131,7 +147,7 @@ f0 = scaled_datanp[:,0]
 f1 = scaled_datanp[:,1]
 
 # Run best param selection 
-results = best_params(scaled_datanp, SHOW_EXECUTION, metric = str(sys.argv[2]) if len(sys.argv) >= 2 else "stability") # use stability
+results = best_params(scaled_datanp, SHOW_EXECUTION, metric = str(sys.argv[2])) # use stability
 
 # Show plot - make optional
 plt.scatter(f0, f1, s=8)
@@ -148,9 +164,8 @@ plt.show()
 print(
     f"nb clusters = {results['n_clusters']}, "
     f"noise points = {results['noise_points']}, "
-    f"runtime = {results['runtime']} ms"
+    f"runtime = {results['runtime']} ms",
+    f"silhouette = {results['silhouette']:.4f}, "
+    f"davies = {results['davies']:.4f}, "
+    f"calinski = {results['calinski']:.4f}"
 )
-
-
-# Arbre couvrant de poid minimal
-# Clustering hierarchique sur larbre couvrant
