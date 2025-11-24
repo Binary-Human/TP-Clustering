@@ -19,7 +19,6 @@ from kneed import KneeLocator
 SHOW_EXECUTION = True
 
 def best_params(dataset, is_plot_graph):
-    # TODO : test on samples (expected - found)
     # Evaluate metrics for different parameters and plot
 
     n_samples = dataset.shape[0]
@@ -43,7 +42,7 @@ def best_params(dataset, is_plot_graph):
         tps2 = time.time()
         runtime = round((tps2 - tps1)*1000,2)
 
-        # Silhouette (non calculable pour k=1)
+        # metrics
         sil = metrics.silhouette_score(dataset, model.labels_)
         davies = metrics.davies_bouldin_score(dataset, model.labels_)
         calinski = metrics.calinski_harabasz_score(dataset, model.labels_)
@@ -120,12 +119,9 @@ dataset_name = str(sys.argv[1])
 databrut = arff.loadarff(open(path+str(dataset_name), 'r'))
 datanp = np.array([[x[0],x[1]] for x in databrut[0]])
 
-
-# TODO : Besoin de prétraitement des données ?
 # Prétraitement
 scaler = StandardScaler()
 scaled_datanp = scaler.fit_transform(datanp)
-# TODO : Use scaled data
 
 print("---------------------------------------")
 print("Affichage données initiales            "+ str(dataset_name))
