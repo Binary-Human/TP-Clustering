@@ -43,7 +43,7 @@ def distanceToNeighbors(dataset, v, showplot):
         plt.plot(distancetrie)
         plt.show()
 
-    return np.percentile(distancetrie, 95) # TODO : To refine ?
+    return np.percentile(distancetrie, 90)
 
 def best_params(dataset, is_plot_graph, metric, eps = 0.5, min_samples = 5 ):
 
@@ -75,7 +75,7 @@ def best_params(dataset, is_plot_graph, metric, eps = 0.5, min_samples = 5 ):
 
             tps1 = time.time()
             model = cluster.DBSCAN(eps=e, min_samples=min_samples)
-            model.fit(dataset) # TODO : fit_predict ?
+            model.fit(dataset)
             tps2 = time.time()
             labels = model.labels_
             runtime = round((tps2 - tps1)*1000,2)
@@ -99,7 +99,7 @@ def best_params(dataset, is_plot_graph, metric, eps = 0.5, min_samples = 5 ):
                     'n_clusters': n_clusters,
                     'epsilon': e,
                     'min_samples': min_samples,
-                    'silhouette': silhouette_score, # When error null ? TODO
+                    'silhouette': silhouette_score,
                     'davies': davies,
                     'calinski': calinski,
                     'noise_points': n_noise,
@@ -142,11 +142,11 @@ def best_params(dataset, is_plot_graph, metric, eps = 0.5, min_samples = 5 ):
         
     else :
 
-        print(f"Testing for epsilon = {e}")
+        print(f"Testing for epsilon = {epsilon}")
     
         tps1 = time.time()
         model = cluster.DBSCAN(eps=epsilon, min_samples=min_samples)
-        model.fit(dataset) # TODO : fit_predict ?
+        model.fit(dataset)
         tps2 = time.time()
         labels = model.labels_
         runtime = round((tps2 - tps1)*1000,2)
@@ -165,7 +165,7 @@ def best_params(dataset, is_plot_graph, metric, eps = 0.5, min_samples = 5 ):
                 'n_clusters': n_clusters,
                 'epsilon': epsilon,
                 'min_samples': min_samples,
-                'silhouette': silhouette_score, # When error null ? TODO
+                'silhouette': silhouette_score,
                 'davies': davies,
                 'calinski': calinski,
                 'noise_points': n_noise,
@@ -184,7 +184,6 @@ dataset_name = str(sys.argv[1])
 databrut = arff.loadarff(open(path+str(dataset_name), 'r'))
 datanp = np.array([[x[0],x[1]] for x in databrut[0]])
 
-# TODO : sur demande ?
 # Prétraitement
 scaler = StandardScaler()
 scaled_datanp = scaler.fit_transform(datanp)
@@ -194,8 +193,8 @@ print("Affichage données initiales            "+ str(dataset_name))
 f0 = scaled_datanp[:,0]
 f1 = scaled_datanp[:,1]
 
-# Run best param selection 
-results = best_params(scaled_datanp, SHOW_EXECUTION, metric = str(sys.argv[2]) if len(sys.argv) >= 2 else "silhouette") # if exist, silhouette by default
+# Run best param selection
+results = best_params(scaled_datanp, SHOW_EXECUTION, metric = str(sys.argv[2])) # if exist, silhouette by default
 
 # Show plot - make optional
 plt.scatter(f0, f1, s=8)
@@ -208,10 +207,11 @@ plt.title("Données après clustering : "+ str(dataset_name) + " - Nb clusters =
 plt.show()
 
 # Fetch the metrics from best params
-# TODO : complement metrics
 print(
     f"nb clusters = {results['n_clusters']}, "
     f"noise points = {results['silhouette']:.4f}, "
     f"silhouette = {results['silhouette']:.4f}, "
+    f"davies = {results['davies']:.4f}, "
+    f"calinski = {results['calinski']:.4f}, "
     f"runtime = {results['runtime']} ms"
 )
