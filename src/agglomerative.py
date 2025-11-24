@@ -84,6 +84,7 @@ def best_params(dataset, is_plot_graph, link='average', n_clusters = None, dist 
         # Collect all_metrics
         all_metrics.append({
             'n_clusters': model.n_clusters_,
+            'model': model,
             'silhouette': silhouette,
             'davies': davies,
             'calinski': calinski,
@@ -91,12 +92,19 @@ def best_params(dataset, is_plot_graph, link='average', n_clusters = None, dist 
             'labels': model.labels_
         })
 
-    best_k = k_values[np.argmax(metric) if metric == 'silhouette' or 'calinski' else np.argmin(metric)]
+    df = pd.DataFrame(all_metrics)
 
+    if metric == 'silhouette':
+        best_k = df.loc[df['silhouette'].idxmax(), 'n_clusters']
+    elif metric == 'calinski':
+        best_k = df.loc[df['calinski'].idxmax(), 'n_clusters']
+    elif metric == 'davies':
+        best_k = df.loc[df['davies'].idxmin(), 'n_clusters']
+    else:
+        raise ValueError("Metric must be: silhouette, calinski, or davies")
     # Récupération de la ligne correspondante dans all_metrics
     best_perf = next(item for item in all_metrics if item['n_clusters'] == best_k)
 
-    df = pd.DataFrame(all_metrics)
     print(df.head())
 
     if is_plot_graph:
@@ -127,7 +135,7 @@ def best_params(dataset, is_plot_graph, link='average', n_clusters = None, dist 
     
     if SHOW_DENDROGRAM:
         print("Affichage du dendrogramme...")
-        plot_dendrogram(model)
+        plot_dendrogram(best_perf['model'])
         
     return best_perf
 
@@ -147,7 +155,7 @@ print("Affichage données initiales            "+ str(dataset_name))
 f0 = scaled_datanp[:,0]
 f1 = scaled_datanp[:,1]
 
-linkage = 'average'                                                                             # Update linkage here
+linkage = str(sys.argv[3])                                                                          # Update linkage here
 # Run best param selection 
 results = best_params(scaled_datanp, SHOW_EXECUTION, link=linkage, metric = str(sys.argv[2]))
 
